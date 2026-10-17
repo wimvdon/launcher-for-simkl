@@ -2,6 +2,58 @@
 
 Newest first. Add an entry for every notable choice: what was decided, why, and what was rejected.
 
+## 2026-10-17: Launcher for Simkl, from the template
+
+The repository was created from the android-app template; this is the first version of the app.
+
+- **What it is:** a home screen for Android TV and Google TV. Pinned apps on top, SIMKL rows
+  ("channels") below, titles open in Stremio or Nuvio. Rejected: a regular app with a SIMKL
+  channel on the built-in home screen only (Google TV hardly shows app channels, and the owner
+  asked for a launcher).
+- **Application ID `io.github.impca201.launcherforsimkl`**, matching Tracker for Simkl's
+  `io.github.impca201.trackerforsimkl`. It can't change after the first release.
+- **minSdk 26 (Android 8.0)**, not the template's 31. Many TVs and boxes run Android 9-11 (the
+  Nvidia Shield runs 11), and 8.0 is where home screen channels (TvProvider preview programmes)
+  start. No dynamic colour is lost: TVs have no wallpaper colours.
+- **TV Material 3 (`androidx.tv:tv-material` 1.1.0), a new dependency,** instead of phone Material 3:
+  its cards, list items, buttons and switches show focus for a remote (scale, border, container
+  colour), which phone components only hint at. Phone Material 3 is not included at all. The shared
+  design kit (`SettingsKit` and friends) is phone-only, so this app doesn't carry it;
+  `DESIGN.md` "This app" lists the differences. Dark theme only.
+- **Code reused from Tracker for Simkl** by copying, not by a shared library: `JsonExt`, the shape
+  of `SimklApi` and `Parsers`, `Images`, `Dates`, `CrashReporter`, `SettingsStore`'s two-file
+  backup split, and the same libraries (OkHttp, kotlinx.serialization, Coil, DataStore,
+  Robolectric). Rejected: a shared module or library (a second repository to publish and version
+  for a few hundred lines).
+- **Sign-in with SIMKL's PIN flow** (`/oauth/pin`), made for TVs: a code to enter at simkl.com/pin
+  on a phone. Rejected: the browser redirect the Tracker uses (most TVs have no usable browser).
+  The launcher only reads SIMKL; marking watched stays with Stremio, Nuvio and the Tracker.
+- **Same SIMKL client ID mechanism as the Tracker** (`-PsimklClientId`, CI variable
+  `SIMKL_CLIENT_ID`). The PIN flow needs no redirect URI, so the Tracker's client ID can be reused.
+  Trending rows (data.simkl.in) work without one.
+- **Deep links by IMDb id**, the id both Stremio (Cinemeta) and Nuvio use, started with an explicit
+  package because Nuvio also answers `stremio://`. A title listed without an IMDb id is looked up
+  once; Stremio falls back to search, Nuvio to its TMDB link.
+- **Changing the home app where Android won't let you:** an accessibility service that filters the
+  Home key and replaces the stock home activity when it comes to the front, as Projectivy Launcher
+  and Button Mapper do. It is off until the user turns it on, reads no window content and only
+  reacts to the stock home *activity* (so Google TV's settings panel keeps working). Long-pressing
+  Home opens the TV's settings, which the override would otherwise take away. For TVs that block
+  even that, the app and the usage guide give ADB commands (allow restricted settings, enable the
+  service, optionally disable Google TV's home). Rejected: requiring root, and disabling the stock
+  launcher by default (it removes Google TV's settings panel and profiles).
+- **Channels:** the launcher's own rows are configurable channels; "Up next" is also published as
+  a preview channel on the built-in home screen (TvProvider, local data only). Other apps' channels
+  are read only when Android grants `ACCESS_ALL_EPG_DATA`, which it reserves for system apps, so a
+  normal installation can't show them. Rejected: scraping them some other way (there is none) and
+  Watch Next entries (Stremio and Nuvio publish their own; duplicates).
+- **No screen transition animation library:** screens fade in (150ms). `AnimatedContent` makes
+  focus requests fail until it finishes, which leaves a remote without focus.
+- **Compose's `BringIntoViewSpec` was tried** to keep the focused row and tile at a fixed position,
+  and dropped: at the ends of a list it kept asking for a scroll the list couldn't make, which
+  looped. The focused row scrolls to the top with `animateScrollToItem` instead, which stops at the
+  ends.
+
 ## 2026-10-17: Help text only where the screen doesn't speak for itself
 
 The owner found the apps over-explanatory. A scan of every hint, summary and help paragraph removed text that restated a label, described standard controls (drag handles, tapping a row) or explained the app's design, and shortened the rest to what the screen can't show: consequences, where data goes, unfamiliar terms. `DESIGN.md` ("Wording") now says so, and the Dynamic color supporting text is one shared phrase without the app's colour name. Rejected: removing all help text (consequences and privacy notes are information, not decoration) and tooltips or info buttons instead (hidden text people rarely open, and more to translate).

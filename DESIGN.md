@@ -1,12 +1,11 @@
 # Design
 
-Master copy of the design language shared by the apps built from this template: Tracker for
-Simkl, Time Tracker for Notion, Snoozer, RSS Reader and Noter for Notion. Each app keeps a copy
-of this file in its own repository, with its own "This app" section at the end.
+Launcher for Simkl is one of the sibling Android apps (Tracker for Simkl, Time Tracker for Notion,
+Snoozer, RSS Reader and Noter for Notion) that share one design language.
 
-To change a shared rule: change it here first, then copy every section except "This app"
-unchanged into `DESIGN.md` of every app. A new app made from this template follows these
-rules too: copy this file into it and fill in "This app".
+The shared rules (every section except "This app") have their master copy in `DESIGN.md` of
+the android-app template (`wimvdon/android-app`). Change them there first, then copy them
+unchanged to every app. Only the "This app" section belongs to this repository.
 
 ## Icons
 
@@ -198,5 +197,33 @@ app apart from their package (and `R` import) lines. Copy a change to the other 
 
 ## This app
 
-Each app replaces this section with its own rules: the seed colour of its theme and its
-signature element.
+Launcher for Simkl is a TV app: it is used from a sofa with a remote (D-pad, OK, Back, Home),
+so it follows Material 3 for TV (`androidx.tv:tv-material`) where the shared rules assume a
+phone. The differences, and why:
+
+- **Icon:** the TV screen of Tracker for Simkl (the two belong together) holding a white 2x2 grid
+  of app tiles, gradient `#FF6FA8` → `#E0408A` → `#A63CD0`. The TV banner (`drawable-*/banner.png`,
+  320x180 at xhdpi) shows the icon with the app name. Not yet in the shared icon table: add it in
+  the master copy first.
+- **Colour:** a dark scheme only, generated from the seed `#E0408A`. TV home screens are dark and
+  Material's TV guidance recommends dark themes; there is no Theme setting and no Dynamic color
+  (TVs have no wallpaper colours). TV Material has no `surfaceContainer*` roles, so the same
+  scheme's roles are in `SurfaceRoles` (`ui/theme/Theme.kt`).
+- **Focus is the signature:** every tile is a TV Material `Card` that grows 8% and gets a light
+  outline when focused. The focused title's backdrop fills the top of the home screen behind its
+  name, type, year, episode and overview; with nothing focused there, today's date shows.
+- **Navigation:** no navigation bar. The home screen is the only top-level destination; All apps
+  and Settings are child screens opened from the icon buttons at the top right (and the All apps
+  tile), and Back returns. Home always returns to the top of the home screen.
+- **Layout:** everything stays inside the 5% overscan-safe area (48dp left and right, 27dp top and
+  bottom of a 960x540dp TV screen, `TvSpacing`). Rows scroll sideways; the focused row moves to
+  the top of the list.
+- **Settings** are one list with section headers, as in the shared rules, but built from TV
+  Material's `ListItem` (the phone `SettingsKit` doesn't handle remote focus). Switches show their
+  state on the right; choices among a few options are rows with a check mark. Information rows
+  are focusable so the remote can scroll to them.
+- **Dialogs** (`OptionsDialog`): a title, an optional message and a list of choices; the first
+  choice has focus and Back closes it. They replace menus, which TVs don't have: holding OK on a
+  tile opens its options.
+- **Screens fade in** (150ms) instead of the shared-axis transition: an animated transition
+  blocks moving focus to the new screen until it ends.

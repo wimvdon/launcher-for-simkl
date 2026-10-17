@@ -3,13 +3,14 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // ---------------------------------------------------------------------------
-// App identity: the ONE place to change the package / application ID.
-// (Also move the Kotlin sources in app/src/*/kotlin/ to the matching folder.)
+// App identity: the ONE place to change the package / application ID. Once released it must
+// never change (phones would treat it as a different app).
 // ---------------------------------------------------------------------------
-val appId = "com.example.template"
+val appId = "io.github.impca201.launcherforsimkl"
 
 // ---------------------------------------------------------------------------
 // Versioning
@@ -71,11 +72,16 @@ android {
 
     defaultConfig {
         applicationId = appId
-        // Android 12. See docs/decisions.md for why.
-        minSdk = 31
+        // Android 8.0, the first version with home screen channels. Lower than the template's
+        // Android 12 because many TVs and boxes still run Android 9-11: see docs/decisions.md.
+        minSdk = 26
         targetSdk = 37
         versionCode = appVersion.code
         versionName = appVersion.name
+        // The app's SIMKL client ID (-PsimklClientId=..., from the SIMKL_CLIENT_ID Actions variable
+        // in CI). It is not a secret; without it sign-in explains what is missing and only the
+        // public trending rows load.
+        buildConfigField("String", "SIMKL_CLIENT_ID", "\"${providers.gradleProperty("simklClientId").getOrElse("")}\"")
     }
 
     signingConfigs {
@@ -91,7 +97,8 @@ android {
 
     buildTypes {
         debug {
-            // Lets a pull request's debug APK be installed next to the released app.
+            // Lets a pull request's debug APK be installed next to the released app, as
+            // "Launcher for Simkl Dev" (src/debug/res).
             applicationIdSuffix = ".debug"
         }
         release {
@@ -109,11 +116,25 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     androidResources {
+        localeFilters += listOf("en", "nl", "fr", "de", "es", "it")
         // Builds the per-app language list from the values-xx folders (see res/resources.properties).
         generateLocaleConfig = true
+    }
+
+    testOptions {
+        // Robolectric launches the real activity in the JVM unit tests (see LaunchTest).
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.testLogging {
+                events("failed")
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                showStandardStreams = false
+            }
+        }
     }
 
     lint {
@@ -125,19 +146,33 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+
+    dependenciesInfo {
+        includeInApk = false
+    }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.datastore.preferences)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.compose.material.icons)
+    implementation(libs.androidx.tv.material)
+
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.junit)
 }
 
 // Used by the workflows to name the APK <app>-<version>.apk: ./gradlew -q :app:printApkBaseName
