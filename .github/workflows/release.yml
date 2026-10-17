@@ -11,8 +11,9 @@
 # version is not higher than the previous one, or nothing changed since the previous release.
 #
 # Signing uses four repository secrets (see README): ANDROID_KEYSTORE_BASE64,
-# ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD. Without them a
-# publish fails; a "none" build falls back to a debug APK with a warning.
+# ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD (the same names without
+# ANDROID_ also work, as earlier releases used them). Without them a publish fails; a "none"
+# build falls back to a debug APK with a warning.
 name: Release
 
 on:
@@ -65,8 +66,7 @@ jobs:
           set -euo pipefail
           fail() { echo "::error title=Release refused::$1"; exit 1; }
           # The checkout above (fetch-depth: 0) already has origin/main and every tag. It keeps no
-          # credentials, so no further git commands may talk to GitHub (a private repository would
-          # fail with "could not read Username"); use the gh API instead.
+          # credentials, so no further git commands may talk to GitHub; use the gh API instead.
           # Highest vX.Y.Z tag (by version, not date), optionally excluding one tag.
           latest_tag() {
             git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -vxF "${1:-}" | head -n 1 || true
@@ -126,10 +126,10 @@ jobs:
         id: signing
         env:
           PUBLISH: ${{ steps.plan.outputs.publish }}
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 || secrets.KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD || secrets.KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || secrets.KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.KEY_PASSWORD }}
         run: |
           set -euo pipefail
           missing=""
@@ -182,10 +182,12 @@ jobs:
           SIGNED: ${{ steps.signing.outputs.signed }}
           VERSION: ${{ steps.plan.outputs.version }}
           CODE: ${{ steps.plan.outputs.code }}
+          SIMKL_CLIENT_ID: ${{ vars.SIMKL_CLIENT_ID }}
         run: |
           set -euo pipefail
-          args=()
-          if [ "$PUBLISH" = "true" ]; then args=(-PappVersionName="$VERSION" -PappVersionCode="$CODE"); fi
+          # The app's SIMKL client ID comes from the SIMKL_CLIENT_ID Actions variable (not a secret).
+          args=(-PsimklClientId="$SIMKL_CLIENT_ID")
+          if [ "$PUBLISH" = "true" ]; then args+=(-PappVersionName="$VERSION" -PappVersionCode="$CODE"); fi
           base="$(./gradlew -q :app:printApkBaseName "${args[@]}")"
           mkdir -p dist
           if [ "$SIGNED" = "true" ]; then
@@ -263,7 +265,7 @@ jobs:
   #   permissions:
   #     contents: read
   #   env:
-  #     PACKAGE_NAME: com.example.template
+  #     PACKAGE_NAME: io.github.impca201.launcherforsimkl
   #   steps:
   #     - uses: actions/checkout@v7
   #       with:
@@ -290,7 +292,7 @@ jobs:
   #         umask 077
   #         printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
   #           "$RUNNER_TEMP/release.keystore" "$ANDROID_KEYSTORE_PASSWORD" "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD" > keystore.properties
-  #         ./gradlew bundleRelease -PappVersionName="$VERSION" -PappVersionCode="$CODE"
+  #         ./gradlew bundleRelease -PappVersionName="$VERSION" -PappVersionCode="$CODE" -PsimklClientId="${{ vars.SIMKL_CLIENT_ID }}"
   #     - name: Remove signing key
   #       if: always()
   #       run: rm -f keystore.properties "$RUNNER_TEMP/release.keystore"

@@ -1,24 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- No permissions on purpose. Ask before adding any (see CLAUDE.md). -->
+    <!-- Every permission is explained in PRIVACY.md. Ask before adding any (see CLAUDE.md). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Publishes the "Up next" channel on the system's home screen (TvProvider). -->
+    <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
+    <!-- Reads other apps' home screen channels. Android grants it only to system apps, so a normal
+         installation never has it (see tv/SystemChannels.kt). -->
+    <uses-permission
+        android:name="com.android.providers.tv.permission.ACCESS_ALL_EPG_DATA"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- A TV launcher that also installs on phones and tablets. -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!-- The apps the launcher lists and opens, without "all packages" access. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <package android:name="com.stremio.one" />
+        <package android:name="com.nuvio.tv" />
+        <package android:name="com.nuvio.app" />
+    </queries>
 
     <application
+        android:name=".LauncherApp"
         android:allowBackup="true"
+        android:banner="@drawable/banner"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.App">
+        android:theme="@style/Theme.Launcher"
+        tools:targetApi="37">
+
+        <!-- The home screen. HOME makes it choosable as the home app where Android allows it. -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".ui.MainActivity"
+            android:configChanges="keyboard|keyboardHidden|navigation"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-    </application>
 
+        <!-- Opens a title from the "Up next" channel on the system home screen in Stremio or Nuvio.
+             Exported because the system home screen starts it; it only opens titles. -->
+        <activity
+            android:name=".ui.OpenActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Launcher.Translucent" />
+
+        <!-- Home button override for Google TV and other devices that don't let users choose a home
+             app. Only Android can bind it (BIND_ACCESSIBILITY_SERVICE), after the user turns it on. -->
+        <service
+            android:name=".home.HomeButtonService"
+            android:exported="true"
+            android:label="@string/home_button_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/home_button_service" />
+        </service>
+    </application>
 </manifest>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- What Android's own backup (to the user's Google account) and phone-to-phone transfer copy.
+<!-- What Android's own backup (to the user's Google account) and device-to-device transfer copy.
      Only the files listed here; everything else stays on this phone. Put settings the user would
      want back on a new phone in the `backed_up_settings` DataStore; keep sign-in tokens, API keys
      and device-only state in another file. See docs/architecture.md, "Backup".

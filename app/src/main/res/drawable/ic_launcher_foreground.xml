@@ -1,11 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Placeholder icon: a white rounded square. Replace per app (see README "Using this template"). -->
+<!-- A TV screen holding a white 2x2 grid of app tiles ("home screen"), with a pink → magenta →
+     violet gradient on the white background. Everything sits inside the 66dp adaptive-icon safe
+     zone (21..87). Same screen shape as Tracker for Simkl, which it belongs with. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M42,36h24a6,6 0,0 1,6 6v24a6,6 0,0 1,-6 6h-24a6,6 0,0 1,-6 -6v-24a6,6 0,0 1,6 -6z" />
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.92"
+        android:scaleY="0.92">
+        <!-- Screen -->
+        <path android:pathData="M40,32h28a12,12 0,0 1,12 12v20a12,12 0,0 1,-12 12h-28a12,12 0,0 1,-12 -12v-20a12,12 0,0 1,12 -12z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="28"
+                    android:startY="32"
+                    android:endX="80"
+                    android:endY="76">
+                    <item android:offset="0" android:color="#FFFF6FA8" />
+                    <item android:offset="0.55" android:color="#FFE0408A" />
+                    <item android:offset="1" android:color="#FFA63CD0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <!-- App tiles -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M45,43h5a2,2 0,0 1,2 2v5a2,2 0,0 1,-2 2h-5a2,2 0,0 1,-2 -2v-5a2,2 0,0 1,2 -2z M58,43h5a2,2 0,0 1,2 2v5a2,2 0,0 1,-2 2h-5a2,2 0,0 1,-2 -2v-5a2,2 0,0 1,2 -2z M45,56h5a2,2 0,0 1,2 2v5a2,2 0,0 1,-2 2h-5a2,2 0,0 1,-2 -2v-5a2,2 0,0 1,2 -2z M58,56h5a2,2 0,0 1,2 2v5a2,2 0,0 1,-2 2h-5a2,2 0,0 1,-2 -2v-5a2,2 0,0 1,2 -2z" />
+    </group>
 </vector>
